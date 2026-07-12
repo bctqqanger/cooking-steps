@@ -881,34 +881,6 @@ input { font-family: inherit; }
   border-color: rgba(201, 42, 42, 0.2);
 }
 
-.card-action-btn.like-btn.active {
-  background: rgba(232, 89, 12, 0.12);
-  color: var(--orange);
-  border-color: rgba(232, 89, 12, 0.2);
-}
-
-.card-rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.card-star {
-  font-size: 14px;
-  color: var(--gray);
-}
-
-.card-star.filled {
-  color: var(--gold);
-}
-
-.card-rating-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--gold);
-}
-
 /* ==================== 详情页操作区 ==================== */
 .detail-actions {
   margin-top: 16px;
@@ -947,50 +919,10 @@ input { font-family: inherit; }
   background: rgba(255,255,255,0.3);
 }
 
-.detail-action-btn.like-btn.active {
-  background: rgba(232, 89, 12, 0.9);
-  border-color: rgba(232, 89, 12, 0.6);
-  color: var(--surface);
-}
-
 .detail-action-btn.fav-btn.active {
   background: rgba(201, 42, 42, 0.9);
   border-color: rgba(201, 42, 42, 0.6);
   color: var(--surface);
-}
-
-.rating-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rating-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.8);
-}
-
-.star-rating {
-  display: flex;
-  gap: 4px;
-}
-
-.star-rating .star {
-  font-size: 24px;
-  color: rgba(255,255,255,0.35);
-  cursor: pointer;
-  transition: all 0.15s var(--bounce);
-  line-height: 1;
-  user-select: none;
-}
-
-.star-rating .star:hover {
-  transform: scale(1.25);
-}
-
-.star-rating .star.filled {
-  color: var(--gold);
 }
 
 /* ==================== 做菜笔记 ==================== */
@@ -1143,7 +1075,6 @@ input { font-family: inherit; }
   .detail-hero-image { height: 240px; }
   .detail-info { padding: 20px; }
   .detail-actions-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .rating-wrap { width: 100%; }
   .step-card { padding: 16px; gap: 14px; }
   .step-number { width: 38px; height: 38px; font-size: 16px; }
   .step-controls { flex-wrap: wrap; padding: 16px; }

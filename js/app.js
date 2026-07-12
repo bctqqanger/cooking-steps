@@ -12,9 +12,7 @@ let completionSoundPlayed = false;
 
 // ==================== localStorage 数据管理 ====================
 const LS_KEYS = {
-  likes: 'cooking_likes',
   favorites: 'cooking_favorites',
-  ratings: 'cooking_ratings',
   comments: 'cooking_comments'
 };
 
@@ -25,15 +23,6 @@ function lsSet(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
 
-function isLiked(id) { return !!lsGet(LS_KEYS.likes)[id]; }
-function toggleLike(id) {
-  const likes = lsGet(LS_KEYS.likes);
-  if (likes[id]) delete likes[id]; else likes[id] = true;
-  lsSet(LS_KEYS.likes, likes);
-  renderRecipes();
-  if (currentRecipe && currentRecipe.id === id) renderDetailActions();
-}
-
 function isFavorited(id) { return !!lsGet(LS_KEYS.favorites)[id]; }
 function toggleFavorite(id) {
   const favs = lsGet(LS_KEYS.favorites);
@@ -41,15 +30,6 @@ function toggleFavorite(id) {
   lsSet(LS_KEYS.favorites, favs);
   renderRecipes();
   updateNavActive();
-  if (currentRecipe && currentRecipe.id === id) renderDetailActions();
-}
-
-function getRating(id) { return lsGet(LS_KEYS.ratings)[id] || 0; }
-function setRating(id, stars) {
-  const ratings = lsGet(LS_KEYS.ratings);
-  ratings[id] = stars;
-  lsSet(LS_KEYS.ratings, ratings);
-  renderRecipes();
   if (currentRecipe && currentRecipe.id === id) renderDetailActions();
 }
 
@@ -180,14 +160,8 @@ function renderRecipes() {
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               </button>
-              <button class="card-action-btn like-btn ${isLiked(r.id) ? 'active' : ''}" onclick="event.stopPropagation();toggleLike(${r.id})" title="${isLiked(r.id) ? '取消点赞' : '点赞'}">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isLiked(r.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                </svg>
-              </button>
             </div>
           </div>
-          ${getRating(r.id) ? `<div class="card-rating"><span class="card-star filled">★</span><span class="card-rating-num">${getRating(r.id)}</span></div>` : ''}
         </div>
       </div>
     `).join('');
@@ -557,46 +531,18 @@ function goHome() {
 function renderDetailActions() {
   if (!currentRecipe) return;
   const id = currentRecipe.id;
-  const rating = getRating(id);
   const container = document.getElementById('detailActions');
   if (!container) return;
   container.innerHTML = `
     <div class="detail-actions-inner">
-      <div class="action-btn-group">
-        <button class="detail-action-btn like-btn ${isLiked(id) ? 'active' : ''}" onclick="toggleLike(${id})">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="${isLiked(id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-          </svg>
-          <span>${isLiked(id) ? '已点赞' : '点赞'}</span>
-        </button>
-        <button class="detail-action-btn fav-btn ${isFavorited(id) ? 'active' : ''}" onclick="toggleFavorite(${id})">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="${isFavorited(id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          <span>${isFavorited(id) ? '已收藏' : '收藏'}</span>
-        </button>
-      </div>
-      <div class="rating-wrap">
-        <span class="rating-label">我的评分</span>
-        <div class="star-rating" id="starRating">
-          ${[1,2,3,4,5].map(s => `
-            <span class="star ${s <= rating ? 'filled' : ''}" onclick="setRating(${id}, ${s})" onmouseover="hoverStar(${s})" onmouseout="resetStars(${id})">★</span>
-          `).join('')}
-        </div>
-      </div>
+      <button class="detail-action-btn fav-btn ${isFavorited(id) ? 'active' : ''}" onclick="toggleFavorite(${id})">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="${isFavorited(id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span>${isFavorited(id) ? '已收藏' : '收藏'}</span>
+      </button>
     </div>
   `;
-}
-
-function hoverStar(n) {
-  const stars = document.querySelectorAll('#starRating .star');
-  stars.forEach((s, i) => s.classList.toggle('filled', i < n));
-}
-
-function resetStars(id) {
-  const stars = document.querySelectorAll('#starRating .star');
-  const r = getRating(id);
-  stars.forEach((s, i) => s.classList.toggle('filled', i < r));
 }
 
 // ==================== 导航栏滚动效果 ====================
