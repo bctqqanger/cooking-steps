@@ -814,6 +814,17 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') switchTab(currentTab);
 });
 
+// ==================== 一键上滑 ====================
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  btn.classList.toggle('visible', window.scrollY > 300);
+}, { passive: true });
+
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
   // 初始化首页

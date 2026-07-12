@@ -1099,6 +1099,41 @@ input, textarea { font-family: inherit; }
 .timer-close { background: var(--gray-light); color: var(--gray); }
 .timer-close:active { background: var(--border); }
 
+/* ==================== 一键上滑 ==================== */
+.back-to-top {
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--orange);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px);
+  transition: all 0.3s var(--smooth);
+  z-index: 90;
+  border: 2px solid var(--border);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top:active {
+  transform: scale(0.9);
+  background: var(--orange);
+  color: var(--surface);
+}
+
 /* ==================== 照片灯箱 ==================== */
 .photo-lightbox {
   position: fixed;
