@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灶台 · 跟着步骤学做菜</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ==================== 导航栏 ==================== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo" onclick="goHome();return false;">
+        <svg class="logo-icon" viewBox="0 0 40 40" width="36" height="36">
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#FF6B35"/>
+              <stop offset="100%" stop-color="#C92A2A"/>
+            </linearGradient>
+          </defs>
+          <circle cx="20" cy="20" r="18" fill="none" stroke="url(#logoGrad)" stroke-width="2.5"/>
+          <path d="M14 26 Q14 16 20 16 Q26 16 26 26" fill="none" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="20" y1="10" x2="20" y2="14" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="20" cy="8" r="2.5" fill="#FFD93D"/>
+        </svg>
+        <span class="logo-text">灶台</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" class="nav-link active" onclick="filterCategory('all');return false;">全部菜谱</a>
+        <a href="#" class="nav-link" onclick="filterCategory('家常菜');return false;">家常菜</a>
+        <a href="#" class="nav-link" onclick="filterCategory('快手菜');return false;">快手菜</a>
+        <a href="#" class="nav-link" onclick="filterCategory('汤羹');return false;">汤羹</a>
+        <a href="#" class="nav-link" onclick="filterCategory('甜品');return false;">甜品</a>
+        <a href="#" class="nav-link" onclick="filterCategory('早餐');return false;">早餐</a>
+      </div>
+      <div class="nav-search">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="搜索菜名或食材..." oninput="handleSearch(this.value)">
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== 首页视图 ==================== -->
+  <main id="homeView">
+
+    <!-- Hero 区域 -->
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <span class="hero-badge">跟着做，不翻车</span>
+        <h1 class="hero-title">每一道菜<br>都值得认真对待</h1>
+        <p class="hero-subtitle">分步图解 / 精确计时 / 零基础也能搞定</p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num" id="recipeCount">8</span>
+            <span class="stat-label">道菜谱</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">6</span>
+            <span class="stat-label">个分类</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">可复现</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 分类筛选 -->
+    <section class="filter-section">
+      <div class="container">
+        <div class="filter-chips" id="filterChips">
+          <button class="chip active" onclick="filterCategory('all')">全部</button>
+          <button class="chip" onclick="filterCategory('家常菜')">家常菜</button>
+          <button class="chip" onclick="filterCategory('快手菜')">快手菜</button>
+          <button class="chip" onclick="filterCategory('汤羹')">汤羹</button>
+          <button class="chip" onclick="filterCategory('甜品')">甜品</button>
+          <button class="chip" onclick="filterCategory('早餐')">早餐</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 菜谱卡片网格 -->
+    <section class="recipes-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="sectionTitle">全部菜谱</h2>
+          <span class="section-count" id="sectionCount">共 8 道菜</span>
+        </div>
+        <div class="recipe-grid" id="recipeGrid">
+          <!-- JS 动态填充 -->
+        </div>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <svg viewBox="0 0 80 80" width="64" height="64" fill="none" stroke="#D9A48A" stroke-width="2">
+            <circle cx="40" cy="40" r="36"/>
+            <path d="M28 44 Q40 52 52 44" stroke-linecap="round"/>
+            <circle cx="30" cy="32" r="2.5" fill="#D9A48A"/>
+            <circle cx="50" cy="32" r="2.5" fill="#D9A48A"/>
+          </svg>
+          <p>没有找到相关菜谱</p>
+          <span>试试其他关键词吧</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== 菜谱详情视图 ==================== -->
+  <main id="detailView" style="display:none;">
+    <div class="detail-container">
+      <!-- 返回按钮 -->
+      <button class="back-btn" onclick="goHome()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        返回菜谱
+      </button>
+
+      <!-- 菜谱头部信息 -->
+      <header class="detail-header">
+        <div class="detail-hero-image" id="detailHeroImage">
+          <div class="detail-hero-overlay"></div>
+        </div>
+        <div class="detail-info">
+          <span class="detail-category" id="detailCategory">家常菜</span>
+          <h1 class="detail-title" id="detailTitle">菜名</h1>
+          <p class="detail-desc" id="detailDesc">描述</p>
+          <div class="detail-stats">
+            <div class="detail-stat">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span id="detailTime">30 分钟</span>
+            </div>
+            <div class="detail-stat">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+              <span id="detailDifficulty">简单</span>
+            </div>
+            <div class="detail-stat">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span id="detailServings">2 人份</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 食材清单 -->
+      <section class="ingredients-section">
+        <h2 class="block-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#E8590C" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+          食材清单
+        </h2>
+        <div class="ingredients-grid" id="ingredientsGrid">
+          <!-- JS 动态填充 -->
+        </div>
+      </section>
+
+      <!-- 烹饪步骤 -->
+      <section class="steps-section">
+        <div class="steps-header">
+          <h2 class="block-title">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#E8590C" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            烹饪步骤
+          </h2>
+          <div class="progress-wrap">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill" style="width:0%"></div>
+            </div>
+            <span class="progress-text" id="progressText">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="steps-timeline" id="stepsTimeline">
+          <!-- JS 动态填充 -->
+        </div>
+
+        <!-- 步骤导航控制 -->
+        <div class="step-controls">
+          <button class="ctrl-btn ctrl-prev" id="prevBtn" onclick="navigateStep(-1)" disabled>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            上一步
+          </button>
+          <div class="step-dots" id="stepDots"></div>
+          <button class="ctrl-btn ctrl-next" id="nextBtn" onclick="navigateStep(1)">
+            下一步
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 完成提示 -->
+        <div class="completion-banner" id="completionBanner" style="display:none;">
+          <svg viewBox="0 0 60 60" width="48" height="48">
+            <circle cx="30" cy="30" r="28" fill="none" stroke="#2F9E44" stroke-width="3"/>
+            <polyline points="18 30 26 38 42 22" fill="none" stroke="#2F9E44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div>
+            <h3>大功告成！</h3>
+            <p>这道菜已经完成，快端上桌趁热享用吧</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== 步骤计时器浮窗 ==================== -->
+  <div class="timer-widget" id="timerWidget" style="display:none;">
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-label" id="timerLabel">计时中</div>
+    <div class="timer-buttons">
+      <button class="timer-btn" id="timerToggle" onclick="toggleTimer()">暂停</button>
+      <button class="timer-btn timer-close" onclick="stopTimer()">关闭</button>
+    </div>
+  </div>
+
+  <!-- ==================== 页脚 ==================== -->
+  <footer class="footer">
+    <div class="container">
+      <p>灶台 / 让每个人都能做出好吃的菜 / Keep Cooking</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
