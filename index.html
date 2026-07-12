@@ -133,15 +133,11 @@
         <div class="profile-info">
           <div class="profile-nickname" id="profileNickname" onclick="changeNickname()">点击设置昵称</div>
           <div class="profile-stats">
-            <div class="stat-item">
-              <span class="stat-value" id="myFavorites">0</span>
-              <span class="stat-label">已收藏</span>
-            </div>
-            <div class="stat-item">
+            <div class="stat-item" onclick="toggleProfilePanel('cooked')" style="cursor:pointer;">
               <span class="stat-value" id="myCooked">0</span>
               <span class="stat-label">做过</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item" onclick="toggleProfilePanel('notes')" style="cursor:pointer;">
               <span class="stat-value" id="myNotes">0</span>
               <span class="stat-label">笔记</span>
             </div>
@@ -150,7 +146,7 @@
       </div>
 
       <!-- 做过的菜 -->
-      <div class="cooked-section">
+      <div class="cooked-section" id="cookedSection" style="display:none;">
         <h3 class="section-subtitle">做过的菜</h3>
         <div class="cooked-list" id="cookedList">
           <!-- JS 动态填充 -->
@@ -164,6 +160,24 @@
           </svg>
           <p>还没有做过菜</p>
           <span>完成菜谱的最后一步就会自动记录</span>
+        </div>
+      </div>
+
+      <!-- 我的笔记 -->
+      <div class="my-notes-section" id="myNotesSection" style="display:none;">
+        <h3 class="section-subtitle">我的笔记</h3>
+        <div class="my-notes-list" id="myNotesList">
+          <!-- JS 动态填充 -->
+        </div>
+        <div class="my-notes-empty" id="myNotesEmpty" style="display:none;">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#D9A48A" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <p>还没有笔记</p>
+          <span>在菜谱详情页记录做菜心得吧</span>
         </div>
       </div>
     </section>

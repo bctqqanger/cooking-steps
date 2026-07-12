@@ -286,31 +286,54 @@ function renderFavorites() {
 
 // ==================== 我的页面统计 ====================
 function updateProfileStats() {
-  const favCount = document.getElementById('myFavorites');
   const noteCount = document.getElementById('myNotes');
   const cookedCount = document.getElementById('myCooked');
   const nicknameEl = document.getElementById('profileNickname');
-  if (!favCount || !noteCount) return;
-  
-  const favs = lsGet(LS_KEYS.favorites);
-  favCount.textContent = Object.keys(favs).length;
-  
+  if (!noteCount) return;
+
   const comments = lsGet(LS_KEYS.comments);
   const totalNotes = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0);
   noteCount.textContent = totalNotes;
-  
+
   // 做过的菜数量
   const cooked = lsGet(LS_KEYS.cooked);
   if (cookedCount) cookedCount.textContent = Object.keys(cooked).length;
-  
+
   // 昵称
   const nickname = localStorage.getItem(LS_KEYS.nickname);
   if (nicknameEl) {
     nicknameEl.textContent = nickname || '点击设置昵称';
   }
-  
-  // 渲染做过的菜列表
-  renderCookedList();
+
+  // 如果面板已展开则刷新内容
+  const cookedSection = document.getElementById('cookedSection');
+  if (cookedSection && cookedSection.style.display !== 'none') renderCookedList();
+  const notesSection = document.getElementById('myNotesSection');
+  if (notesSection && notesSection.style.display !== 'none') renderAllNotes();
+}
+
+// ==================== 我的页面面板切换 ====================
+function toggleProfilePanel(type) {
+  const cookedSection = document.getElementById('cookedSection');
+  const notesSection = document.getElementById('myNotesSection');
+  const statItems = document.querySelectorAll('.profile-stats .stat-item');
+  if (!cookedSection || !notesSection) return;
+
+  if (type === 'cooked') {
+    const show = cookedSection.style.display === 'none';
+    cookedSection.style.display = show ? 'block' : 'none';
+    notesSection.style.display = 'none';
+    statItems[0].classList.toggle('active', show);
+    statItems[1].classList.remove('active');
+    if (show) renderCookedList();
+  } else {
+    const show = notesSection.style.display === 'none';
+    notesSection.style.display = show ? 'block' : 'none';
+    cookedSection.style.display = 'none';
+    statItems[1].classList.toggle('active', show);
+    statItems[0].classList.remove('active');
+    if (show) renderAllNotes();
+  }
 }
 
 // ==================== 做过的菜 ====================
@@ -326,7 +349,7 @@ function renderCookedList() {
   const list = document.getElementById('cookedList');
   const empty = document.getElementById('cookedEmpty');
   if (!list || !empty) return;
-  
+
   const cooked = lsGet(LS_KEYS.cooked);
   const cookedRecipes = Object.keys(cooked).map(id => {
     const recipe = RECIPES.find(r => r.id === parseInt(id));
@@ -335,7 +358,7 @@ function renderCookedList() {
     }
     return null;
   }).filter(Boolean).sort((a, b) => b.cookedTime - a.cookedTime);
-  
+
   if (cookedRecipes.length === 0) {
     list.style.display = 'none';
     empty.style.display = 'block';
@@ -359,10 +382,46 @@ function renderCookedList() {
 function formatCookedTime(ts) {
   const d = new Date(ts);
   const now = new Date();
-  const diff = Math.floor((now - d) / 1000 / 60); // 分钟
+  const diff = Math.floor((now - d) / 1000 / 60);
   if (diff < 60) return '刚刚';
   if (diff < 1440) return `${Math.floor(diff / 60)} 小时前`;
   return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+// ==================== 笔记面板渲染 ====================
+function renderAllNotes() {
+  const list = document.getElementById('myNotesList');
+  const empty = document.getElementById('myNotesEmpty');
+  if (!list || !empty) return;
+
+  const comments = lsGet(LS_KEYS.comments);
+  const allNotes = [];
+
+  Object.keys(comments).forEach(recipeId => {
+    const recipe = RECIPES.find(r => r.id === parseInt(recipeId));
+    if (!recipe) return;
+    comments[recipeId].forEach(note => {
+      allNotes.push({ ...note, recipeId: parseInt(recipeId), recipeTitle: recipe.title });
+    });
+  });
+
+  allNotes.sort((a, b) => b.time - a.time);
+
+  if (allNotes.length === 0) {
+    list.style.display = 'none';
+    empty.style.display = 'block';
+  } else {
+    list.style.display = 'flex';
+    empty.style.display = 'none';
+    list.innerHTML = allNotes.map(n => `
+      <div class="my-note-item" onclick="openRecipe(${n.recipeId})">
+        <div class="my-note-recipe">${n.recipeTitle}</div>
+        ${n.photo ? `<div class="my-note-photo"><img src="${n.photo}" alt="笔记图片"></div>` : ''}
+        ${n.text ? `<div class="my-note-text">${escapeHtml(n.text)}</div>` : ''}
+        <div class="my-note-time">${formatTime(n.time)}</div>
+      </div>
+    `).join('');
+  }
 }
 
 // ==================== 昵称 ====================
