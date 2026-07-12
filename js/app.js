@@ -10,12 +10,55 @@ let timerPaused = false;
 let timerTargetStep = null;
 let completionSoundPlayed = false;
 
+// ==================== localStorage 数据管理 ====================
+const LS_KEYS = {
+  likes: 'cooking_likes',
+  favorites: 'cooking_favorites',
+  ratings: 'cooking_ratings'
+};
+
+function lsGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return {}; }
+}
+function lsSet(key, val) {
+  localStorage.setItem(key, JSON.stringify(val));
+}
+
+function isLiked(id) { return !!lsGet(LS_KEYS.likes)[id]; }
+function toggleLike(id) {
+  const likes = lsGet(LS_KEYS.likes);
+  if (likes[id]) delete likes[id]; else likes[id] = true;
+  lsSet(LS_KEYS.likes, likes);
+  renderRecipes();
+  if (currentRecipe && currentRecipe.id === id) renderDetailActions();
+}
+
+function isFavorited(id) { return !!lsGet(LS_KEYS.favorites)[id]; }
+function toggleFavorite(id) {
+  const favs = lsGet(LS_KEYS.favorites);
+  if (favs[id]) delete favs[id]; else favs[id] = true;
+  lsSet(LS_KEYS.favorites, favs);
+  renderRecipes();
+  updateNavActive();
+  if (currentRecipe && currentRecipe.id === id) renderDetailActions();
+}
+
+function getRating(id) { return lsGet(LS_KEYS.ratings)[id] || 0; }
+function setRating(id, stars) {
+  const ratings = lsGet(LS_KEYS.ratings);
+  ratings[id] = stars;
+  lsSet(LS_KEYS.ratings, ratings);
+  renderRecipes();
+  if (currentRecipe && currentRecipe.id === id) renderDetailActions();
+}
+
 // ==================== 首页：渲染菜谱卡片 ====================
 function renderRecipes() {
   const grid = document.getElementById('recipeGrid');
   const empty = document.getElementById('emptyState');
+  const isFavFilter = currentCategory === 'favorites';
   const filtered = RECIPES.filter(r => {
-    const matchCat = currentCategory === 'all' || r.category === currentCategory;
+    const matchCat = isFavFilter ? isFavorited(r.id) : (currentCategory === 'all' || r.category === currentCategory);
     const matchSearch = !currentSearch ||
       r.title.toLowerCase().includes(currentSearch.toLowerCase()) ||
       r.ingredients.some(i => i.name.toLowerCase().includes(currentSearch.toLowerCase()));
@@ -42,39 +85,58 @@ function renderRecipes() {
         <div class="card-body">
           <h3 class="card-title">${r.title}</h3>
           <p class="card-desc">${r.desc}</p>
-          <div class="card-meta">
-            <span class="card-meta-item">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-              </svg>
-              ${r.difficulty}
-            </span>
-            <span class="card-steps-count">${r.steps.length} 步</span>
+          <div class="card-actions-row">
+            <div class="card-meta">
+              <span class="card-meta-item">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                ${r.difficulty}
+              </span>
+              <span class="card-steps-count">${r.steps.length} 步</span>
+            </div>
+            <div class="card-quick-actions">
+              <button class="card-action-btn fav-btn ${isFavorited(r.id) ? 'active' : ''}" onclick="event.stopPropagation();toggleFavorite(${r.id})" title="${isFavorited(r.id) ? '取消收藏' : '收藏'}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFavorited(r.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+              <button class="card-action-btn like-btn ${isLiked(r.id) ? 'active' : ''}" onclick="event.stopPropagation();toggleLike(${r.id})" title="${isLiked(r.id) ? '取消点赞' : '点赞'}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isLiked(r.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                </svg>
+              </button>
+            </div>
           </div>
+          ${getRating(r.id) ? `<div class="card-rating"><span class="card-star filled">★</span><span class="card-rating-num">${getRating(r.id)}</span></div>` : ''}
         </div>
       </div>
     `).join('');
   }
 
   document.getElementById('sectionCount').textContent = `共 ${filtered.length} 道菜`;
-  const titleMap = { all: '全部菜谱', '家常菜': '家常菜', '快手菜': '快手菜', '汤羹': '汤羹', '甜品': '甜品', '早餐': '早餐' };
+  const titleMap = { all: '全部菜谱', '家常菜': '家常菜', '快手菜': '快手菜', '汤羹': '汤羹', '甜品': '甜品', '早餐': '早餐', favorites: '我的收藏' };
   document.getElementById('sectionTitle').textContent = titleMap[currentCategory] || '全部菜谱';
 }
 
 // ==================== 筛选与搜索 ====================
 function filterCategory(cat) {
   currentCategory = cat;
-  document.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('active', c.textContent.trim() === catNameMap(cat));
-  });
-  document.querySelectorAll('.nav-link').forEach(l => {
-    l.classList.toggle('active', l.getAttribute('onclick')?.includes(`'${cat}'`));
-  });
+  updateNavActive();
   renderRecipes();
 }
 
+function updateNavActive() {
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', c.textContent.trim() === catNameMap(currentCategory));
+  });
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('onclick')?.includes(`'${currentCategory}'`));
+  });
+}
+
 function catNameMap(cat) {
-  const m = { all: '全部', '家常菜': '家常菜', '快手菜': '快手菜', '汤羹': '汤羹', '甜品': '甜品', '早餐': '早餐' };
+  const m = { all: '全部', '家常菜': '家常菜', '快手菜': '快手菜', '汤羹': '汤羹', '甜品': '甜品', '早餐': '早餐', favorites: '我的收藏' };
   return m[cat] || '全部';
 }
 
@@ -117,6 +179,7 @@ function openRecipe(id) {
 
   // 渲染步骤
   renderSteps();
+  renderDetailActions();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -408,6 +471,52 @@ function goHome() {
   document.getElementById('homeView').style.display = 'block';
   stopTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== 详情页操作区（评分、收藏、点赞）====================
+function renderDetailActions() {
+  if (!currentRecipe) return;
+  const id = currentRecipe.id;
+  const rating = getRating(id);
+  const container = document.getElementById('detailActions');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="detail-actions-inner">
+      <div class="action-btn-group">
+        <button class="detail-action-btn like-btn ${isLiked(id) ? 'active' : ''}" onclick="toggleLike(${id})">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="${isLiked(id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+          </svg>
+          <span>${isLiked(id) ? '已点赞' : '点赞'}</span>
+        </button>
+        <button class="detail-action-btn fav-btn ${isFavorited(id) ? 'active' : ''}" onclick="toggleFavorite(${id})">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="${isFavorited(id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span>${isFavorited(id) ? '已收藏' : '收藏'}</span>
+        </button>
+      </div>
+      <div class="rating-wrap">
+        <span class="rating-label">我的评分</span>
+        <div class="star-rating" id="starRating">
+          ${[1,2,3,4,5].map(s => `
+            <span class="star ${s <= rating ? 'filled' : ''}" onclick="setRating(${id}, ${s})" onmouseover="hoverStar(${s})" onmouseout="resetStars(${id})">★</span>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function hoverStar(n) {
+  const stars = document.querySelectorAll('#starRating .star');
+  stars.forEach((s, i) => s.classList.toggle('filled', i < n));
+}
+
+function resetStars(id) {
+  const stars = document.querySelectorAll('#starRating .star');
+  const r = getRating(id);
+  stars.forEach((s, i) => s.classList.toggle('filled', i < r));
 }
 
 // ==================== 导航栏滚动效果 ====================

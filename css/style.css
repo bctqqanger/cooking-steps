@@ -842,6 +842,157 @@ input { font-family: inherit; }
   border-top: 1px solid var(--border);
 }
 
+/* ==================== 卡片操作按钮 ==================== */
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.card-quick-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.card-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-light);
+  color: var(--gray);
+  transition: all 0.25s var(--bounce);
+  border: 2px solid transparent;
+}
+
+.card-action-btn:hover {
+  transform: scale(1.15);
+  background: var(--surface);
+}
+
+.card-action-btn.fav-btn.active {
+  background: rgba(201, 42, 42, 0.12);
+  color: var(--red);
+  border-color: rgba(201, 42, 42, 0.2);
+}
+
+.card-action-btn.like-btn.active {
+  background: rgba(232, 89, 12, 0.12);
+  color: var(--orange);
+  border-color: rgba(232, 89, 12, 0.2);
+}
+
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.card-star {
+  font-size: 14px;
+  color: var(--gray);
+}
+
+.card-star.filled {
+  color: var(--gold);
+}
+
+.card-rating-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ==================== 详情页操作区 ==================== */
+.detail-actions {
+  margin-top: 16px;
+}
+
+.detail-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.detail-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.18);
+  color: var(--surface);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s var(--bounce);
+  border: 2px solid rgba(255,255,255,0.25);
+}
+
+.detail-action-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.3);
+}
+
+.detail-action-btn.like-btn.active {
+  background: rgba(232, 89, 12, 0.9);
+  border-color: rgba(232, 89, 12, 0.6);
+  color: var(--surface);
+}
+
+.detail-action-btn.fav-btn.active {
+  background: rgba(201, 42, 42, 0.9);
+  border-color: rgba(201, 42, 42, 0.6);
+  color: var(--surface);
+}
+
+.rating-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rating-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+
+.star-rating {
+  display: flex;
+  gap: 4px;
+}
+
+.star-rating .star {
+  font-size: 24px;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: all 0.15s var(--bounce);
+  line-height: 1;
+  user-select: none;
+}
+
+.star-rating .star:hover {
+  transform: scale(1.25);
+}
+
+.star-rating .star.filled {
+  color: var(--gold);
+}
+
 /* ==================== 响应式 ==================== */
 @media (max-width: 768px) {
   .nav-inner { flex-wrap: wrap; gap: 12px; padding: 10px 16px; }
@@ -858,6 +1009,8 @@ input { font-family: inherit; }
   .detail-title { font-size: 28px; }
   .detail-hero-image { height: 240px; }
   .detail-info { padding: 20px; }
+  .detail-actions-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .rating-wrap { width: 100%; }
   .step-card { padding: 16px; gap: 14px; }
   .step-number { width: 38px; height: 38px; font-size: 16px; }
   .step-controls { flex-wrap: wrap; padding: 16px; }
