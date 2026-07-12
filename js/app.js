@@ -8,6 +8,7 @@ let timerInterval = null;
 let timerSeconds = 0;
 let timerPaused = false;
 let timerTargetStep = null;
+let completionSoundPlayed = false;
 
 // ==================== 首页：渲染菜谱卡片 ====================
 function renderRecipes() {
@@ -89,6 +90,7 @@ function openRecipe(id) {
 
   currentStepIndex = 0;
   completedSteps.clear();
+  completionSoundPlayed = false;
 
   // 切换视图
   document.getElementById('homeView').style.display = 'none';
@@ -119,7 +121,7 @@ function openRecipe(id) {
 }
 
 // ==================== 渲染步骤 ====================
-function renderSteps() {
+function renderSteps(shouldScroll = true) {
   const timeline = document.getElementById('stepsTimeline');
   const dots = document.getElementById('stepDots');
 
@@ -180,12 +182,19 @@ function renderSteps() {
 
   // 检查是否全部完成
   const banner = document.getElementById('completionBanner');
-  banner.style.display = (done === total) ? 'flex' : 'none';
+  const allDone = done === total;
+  banner.style.display = allDone ? 'flex' : 'none';
+  if (allDone && !completionSoundPlayed) {
+    completionSoundPlayed = true;
+    playCompletionSound();
+  }
 
-  // 滚动到当前步骤
-  const currentEl = document.getElementById(`step-${currentStepIndex}`);
-  if (currentEl) {
-    currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // 滚动到当前步骤（仅在手动跳转或打开菜谱时）
+  if (shouldScroll) {
+    const currentEl = document.getElementById(`step-${currentStepIndex}`);
+    if (currentEl) {
+      currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 }
 
@@ -194,18 +203,28 @@ function navigateStep(dir) {
   const total = currentRecipe.steps.length;
   if (dir === 1) {
     if (currentStepIndex < total - 1) {
-      completedSteps.add(currentStepIndex);
+      if (!completedSteps.has(currentStepIndex)) {
+        completedSteps.add(currentStepIndex);
+        playStepDoneSound();
+      }
       currentStepIndex++;
     } else {
       // 最后一步点完成
-      completedSteps.add(currentStepIndex);
-      renderSteps();
+      if (!completedSteps.has(currentStepIndex)) {
+        completedSteps.add(currentStepIndex);
+        playStepDoneSound();
+      }
+      renderSteps(false);
+      // 延时 1.5 秒后自动跳回首页
+      setTimeout(() => {
+        goHome();
+      }, 1500);
       return;
     }
   } else {
     if (currentStepIndex > 0) currentStepIndex--;
   }
-  renderSteps();
+  renderSteps(false);
 }
 
 function jumpToStep(i) {
@@ -218,8 +237,9 @@ function toggleStepDone(i) {
     completedSteps.delete(i);
   } else {
     completedSteps.add(i);
+    playStepDoneSound();
   }
-  renderSteps();
+  renderSteps(false);
 }
 
 // ==================== 计时器 ====================
@@ -234,6 +254,7 @@ function startTimer(seconds, stepIndex) {
   document.getElementById('timerToggle').textContent = '暂停';
   document.getElementById('timerLabel').textContent = '倒计时中';
 
+  playTimerStartSound();
   updateTimerDisplay();
   timerInterval = setInterval(() => {
     if (!timerPaused) {
@@ -243,19 +264,7 @@ function startTimer(seconds, stepIndex) {
         clearInterval(timerInterval);
         document.getElementById('timerLabel').textContent = '时间到！';
         document.getElementById('timerToggle').textContent = '关闭';
-        // 浏览器通知
-        try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.frequency.value = 880;
-          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 1);
-        } catch(e) {}
+        playTimerEndSound();
       }
     }
   }, 1000);
@@ -284,6 +293,100 @@ function stopTimer() {
   document.getElementById('timerWidget').style.display = 'none';
   timerSeconds = 0;
   timerPaused = false;
+}
+
+function playTimerStartSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(659, ctx.currentTime);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch(e) {}
+}
+
+function playTimerEndSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // 三声渐强和弦提示
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + i * 0.15);
+      gain.gain.linearRampToValueAtTime(0.2, now + i * 0.15 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.4);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.4);
+    });
+  } catch(e) {}
+}
+
+function playStepDoneSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // 清脆的双音提示
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(784, now);
+    osc.frequency.setValueAtTime(1047, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  } catch(e) {}
+}
+
+function playCompletionSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // 上行琶音
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.18, now + i * 0.12 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.35);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.35);
+    });
+
+    // 最终和弦
+    [523, 659, 784, 1047].forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + 0.55);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 1.4);
+      osc.start(now + 0.55);
+      osc.stop(now + 1.4);
+    });
+  } catch(e) {}
 }
 
 // ==================== 辅助函数 ====================
