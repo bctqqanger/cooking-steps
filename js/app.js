@@ -14,7 +14,8 @@ let completionSoundPlayed = false;
 const LS_KEYS = {
   likes: 'cooking_likes',
   favorites: 'cooking_favorites',
-  ratings: 'cooking_ratings'
+  ratings: 'cooking_ratings',
+  comments: 'cooking_comments'
 };
 
 function lsGet(key) {
@@ -50,6 +51,84 @@ function setRating(id, stars) {
   lsSet(LS_KEYS.ratings, ratings);
   renderRecipes();
   if (currentRecipe && currentRecipe.id === id) renderDetailActions();
+}
+
+// ==================== 做菜笔记 ====================
+function getComments(id) {
+  return lsGet(LS_KEYS.comments)[id] || [];
+}
+
+function addNote() {
+  if (!currentRecipe) return;
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const all = lsGet(LS_KEYS.comments);
+  if (!all[currentRecipe.id]) all[currentRecipe.id] = [];
+  all[currentRecipe.id].unshift({ text, time: Date.now() });
+  lsSet(LS_KEYS.comments, all);
+
+  input.value = '';
+  renderNotes();
+}
+
+function deleteNote(index) {
+  if (!currentRecipe) return;
+  const all = lsGet(LS_KEYS.comments);
+  if (!all[currentRecipe.id]) return;
+  all[currentRecipe.id].splice(index, 1);
+  if (all[currentRecipe.id].length === 0) delete all[currentRecipe.id];
+  lsSet(LS_KEYS.comments, all);
+  renderNotes();
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function renderNotes() {
+  if (!currentRecipe) return;
+  const container = document.getElementById('notesList');
+  if (!container) return;
+  const notes = getComments(currentRecipe.id);
+
+  if (notes.length === 0) {
+    container.innerHTML = `
+      <div class="notes-empty">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#D9A48A" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <p>还没有笔记</p>
+        <span>做完这道菜后，记录下你的心得吧</span>
+      </div>
+    `;
+  } else {
+    container.innerHTML = notes.map((n, i) => `
+      <div class="note-item">
+        <div class="note-content">${escapeHtml(n.text)}</div>
+        <div class="note-meta">
+          <span class="note-time">${formatTime(n.time)}</span>
+          <button class="note-delete" onclick="deleteNote(${i})">删除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 // ==================== 首页：渲染菜谱卡片 ====================
@@ -180,6 +259,7 @@ function openRecipe(id) {
   // 渲染步骤
   renderSteps();
   renderDetailActions();
+  renderNotes();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
