@@ -91,13 +91,13 @@ input, textarea { font-family: inherit; }
 }
 
 .status-search {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
   background: var(--bg);
   border-radius: 20px;
   padding: 8px 14px;
+  margin: 0 16px 8px;
 }
 
 .status-search svg { color: var(--gray); flex-shrink: 0; }
