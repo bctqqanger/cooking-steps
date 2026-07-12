@@ -16,8 +16,7 @@ const LS_KEYS = {
   favorites: 'cooking_favorites',
   comments: 'cooking_comments',
   cooked: 'cooking_cooked',
-  nickname: 'cooking_nickname',
-  photos: 'cooking_photos'
+  nickname: 'cooking_nickname'
 };
 
 function lsGet(key) {
@@ -38,42 +37,27 @@ function toggleFavorite(id) {
   updateProfileStats();
 }
 
-// ==================== 我的作品（照片）====================
-function getPhotos(id) {
-  return lsGet(LS_KEYS.photos)[id] || [];
+// ==================== 笔记附带照片 ====================
+let notePhotoData = null; // 当前正在编辑的笔记照片
+
+function handleNotePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  compressImage(file, (base64) => {
+    notePhotoData = base64;
+    const preview = document.getElementById('notePhotoPreview');
+    const img = document.getElementById('previewImg');
+    img.src = base64;
+    preview.style.display = 'block';
+  });
+  event.target.value = '';
 }
 
-function handlePhotoUpload(event) {
-  if (!currentRecipe) return;
-  const files = event.target.files;
-  if (!files.length) return;
-
-  const all = lsGet(LS_KEYS.photos);
-  if (!all[currentRecipe.id]) all[currentRecipe.id] = [];
-
-  let processed = 0;
-  const maxPhotos = 9;
-  const remaining = maxPhotos - all[currentRecipe.id].length;
-  const filesToProcess = Array.from(files).slice(0, remaining);
-
-  if (filesToProcess.length === 0) {
-    alert('最多只能上传 9 张照片');
-    event.target.value = '';
-    return;
-  }
-
-  filesToProcess.forEach(file => {
-    compressImage(file, (base64) => {
-      all[currentRecipe.id].push({ data: base64, time: Date.now() });
-      processed++;
-      if (processed === filesToProcess.length) {
-        lsSet(LS_KEYS.photos, all);
-        renderPhotos();
-      }
-    });
-  });
-
-  event.target.value = '';
+function removeNotePhoto() {
+  notePhotoData = null;
+  const preview = document.getElementById('notePhotoPreview');
+  preview.style.display = 'none';
+  document.getElementById('previewImg').src = '';
 }
 
 function compressImage(file, callback) {
@@ -107,54 +91,6 @@ function compressImage(file, callback) {
   reader.readAsDataURL(file);
 }
 
-function deletePhoto(index) {
-  if (!currentRecipe) return;
-  const all = lsGet(LS_KEYS.photos);
-  if (!all[currentRecipe.id]) return;
-  all[currentRecipe.id].splice(index, 1);
-  if (all[currentRecipe.id].length === 0) delete all[currentRecipe.id];
-  lsSet(LS_KEYS.photos, all);
-  renderPhotos();
-}
-
-function renderPhotos() {
-  if (!currentRecipe) return;
-  const container = document.getElementById('photoGallery');
-  if (!container) return;
-  const photos = getPhotos(currentRecipe.id);
-
-  if (photos.length === 0) {
-    container.innerHTML = `
-      <div class="photos-empty">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#D9A48A" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        <p>还没有作品照片</p>
-        <span>做完这道菜后，拍张照记录一下吧</span>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="photo-grid">
-        ${photos.map((p, i) => `
-          <div class="photo-item">
-            <img src="${p.data}" alt="作品照片 ${i + 1}" onclick="openLightbox(this.src)">
-            <button class="photo-delete" onclick="event.stopPropagation();deletePhoto(${i})" title="删除">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <span class="photo-time">${formatTime(p.time)}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-}
-
 function openLightbox(src) {
   const lightbox = document.getElementById('photoLightbox');
   const img = document.getElementById('lightboxImg');
@@ -167,6 +103,90 @@ function closeLightbox() {
   const lightbox = document.getElementById('photoLightbox');
   lightbox.style.display = 'none';
   document.body.style.overflow = '';
+}
+
+// ==================== 做菜笔记 ====================
+function getComments(id) {
+  return lsGet(LS_KEYS.comments)[id] || [];
+}
+
+function addNote() {
+  if (!currentRecipe) return;
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if (!text && !notePhotoData) return;
+
+  const all = lsGet(LS_KEYS.comments);
+  if (!all[currentRecipe.id]) all[currentRecipe.id] = [];
+  const note = { text, time: Date.now() };
+  if (notePhotoData) note.photo = notePhotoData;
+  all[currentRecipe.id].unshift(note);
+  lsSet(LS_KEYS.comments, all);
+
+  input.value = '';
+  removeNotePhoto();
+  renderNotes();
+  updateProfileStats();
+}
+
+function deleteNote(index) {
+  if (!currentRecipe) return;
+  const all = lsGet(LS_KEYS.comments);
+  if (!all[currentRecipe.id]) return;
+  all[currentRecipe.id].splice(index, 1);
+  if (all[currentRecipe.id].length === 0) delete all[currentRecipe.id];
+  lsSet(LS_KEYS.comments, all);
+  renderNotes();
+  updateProfileStats();
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function renderNotes() {
+  if (!currentRecipe) return;
+  const container = document.getElementById('notesList');
+  if (!container) return;
+  const notes = getComments(currentRecipe.id);
+
+  if (notes.length === 0) {
+    container.innerHTML = `
+      <div class="notes-empty">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#D9A48A" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <p>还没有笔记</p>
+        <span>做完这道菜后，记录下你的心得吧</span>
+      </div>
+    `;
+  } else {
+    container.innerHTML = notes.map((n, i) => `
+      <div class="note-item">
+        ${n.photo ? `<div class="note-photo"><img src="${n.photo}" alt="笔记图片" onclick="openLightbox(this.src)"></div>` : ''}
+        ${n.text ? `<div class="note-content">${escapeHtml(n.text)}</div>` : ''}
+        <div class="note-meta">
+          <span class="note-time">${formatTime(n.time)}</span>
+          <button class="note-delete" onclick="deleteNote(${i})">删除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 // ==================== 页面切换 ====================
@@ -485,7 +505,6 @@ function openRecipe(id) {
   renderSteps();
   updateTopbarFav();
   renderNotes();
-  renderPhotos();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -777,86 +796,6 @@ function formatTimerLabel(seconds) {
     return `计时 ${m} 分钟`;
   }
   return `计时 ${seconds} 秒`;
-}
-
-// ==================== 做菜笔记 ====================
-function getComments(id) {
-  return lsGet(LS_KEYS.comments)[id] || [];
-}
-
-function addNote() {
-  if (!currentRecipe) return;
-  const input = document.getElementById('noteInput');
-  const text = input.value.trim();
-  if (!text) return;
-
-  const all = lsGet(LS_KEYS.comments);
-  if (!all[currentRecipe.id]) all[currentRecipe.id] = [];
-  all[currentRecipe.id].unshift({ text, time: Date.now() });
-  lsSet(LS_KEYS.comments, all);
-
-  input.value = '';
-  renderNotes();
-  updateProfileStats();
-}
-
-function deleteNote(index) {
-  if (!currentRecipe) return;
-  const all = lsGet(LS_KEYS.comments);
-  if (!all[currentRecipe.id]) return;
-  all[currentRecipe.id].splice(index, 1);
-  if (all[currentRecipe.id].length === 0) delete all[currentRecipe.id];
-  lsSet(LS_KEYS.comments, all);
-  renderNotes();
-  updateProfileStats();
-}
-
-function formatTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
-function renderNotes() {
-  if (!currentRecipe) return;
-  const container = document.getElementById('notesList');
-  if (!container) return;
-  const notes = getComments(currentRecipe.id);
-
-  if (notes.length === 0) {
-    container.innerHTML = `
-      <div class="notes-empty">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#D9A48A" stroke-width="1.5">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        <p>还没有笔记</p>
-        <span>做完这道菜后，记录下你的心得吧</span>
-      </div>
-    `;
-  } else {
-    container.innerHTML = notes.map((n, i) => `
-      <div class="note-item">
-        <div class="note-content">${escapeHtml(n.text)}</div>
-        <div class="note-meta">
-          <span class="note-time">${formatTime(n.time)}</span>
-          <button class="note-delete" onclick="deleteNote(${i})">删除</button>
-        </div>
-      </div>
-    `).join('');
-  }
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // ==================== 键盘快捷键 ====================

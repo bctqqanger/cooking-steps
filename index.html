@@ -268,31 +268,6 @@
         </div>
       </div>
 
-      <!-- 我的作品 -->
-      <section class="photos-section">
-        <h2 class="block-title">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#E8590C" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          我的作品
-        </h2>
-        <div class="photo-upload-area" id="photoUploadArea">
-          <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)">
-          <button class="photo-add-btn" onclick="document.getElementById('photoInput').click()">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            <span>添加照片</span>
-          </button>
-        </div>
-        <div class="photo-gallery" id="photoGallery">
-          <!-- JS 动态填充 -->
-        </div>
-      </section>
-
       <!-- 照片灯箱 -->
       <div class="photo-lightbox" id="photoLightbox" style="display:none;" onclick="closeLightbox()">
         <img id="lightboxImg" src="" alt="">
@@ -312,7 +287,22 @@
         </h2>
         <div class="notes-form">
           <textarea id="noteInput" rows="3" placeholder="记录你的做菜心得..."></textarea>
-          <button class="note-submit" onclick="addNote()">发布笔记</button>
+          <div class="notes-form-actions">
+            <div class="notes-photo-btn" onclick="document.getElementById('notePhotoInput').click()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span>添加图片</span>
+            </div>
+            <input type="file" id="notePhotoInput" accept="image/*" style="display:none;" onchange="handleNotePhoto(event)">
+            <button class="note-submit" onclick="addNote()">发布笔记</button>
+          </div>
+          <div class="note-photo-preview" id="notePhotoPreview" style="display:none;">
+            <img id="previewImg" src="" alt="">
+            <button class="preview-remove" onclick="removeNotePhoto()">×</button>
+          </div>
         </div>
         <div class="notes-list" id="notesList"></div>
       </section>
